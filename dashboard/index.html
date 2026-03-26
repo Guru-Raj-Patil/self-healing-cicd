@@ -79,11 +79,17 @@
                                 <strong>Recommended Fix:</strong>
                                 <div class="code-block">${item.recommended_fix}</div>
                             </div>
-                            ${item.fix_output ? `
+                            ${item.fix_steps && item.fix_steps.length > 0 ? `
+                            <div class="section">
+                                <strong>Self-Healing Execution Steps:</strong>
+                                <ul style="list-style-type: '⚡ '; padding-left: 20px; color: #2980b9; line-height: 1.6; font-size: 1.05em;">
+                                    ${item.fix_steps.map(step => `<li>${step}</li>`).join('')}
+                                </ul>
+                            </div>` : (item.fix_output ? `
                             <div class="section">
                                 <strong>Auto-Fix Output:</strong>
                                 <div class="code-block">${item.fix_output}</div>
-                            </div>` : ''}
+                            </div>` : '')}
                         </div>
                     `;
                     container.innerHTML += html;

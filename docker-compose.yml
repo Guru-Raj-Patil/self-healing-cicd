@@ -40,6 +40,8 @@ services:
       - jenkins_home:/var/jenkins_home  # Allow backend to access Jenkins workspaces to apply fixes
     environment:
       - MONGO_URI=mongodb://mongodb:27017/cicd_healing
+      - JENKINS_USER=admin
+      - JENKINS_TOKEN=11299bbeabb81e9707cff0c84b6452425a
     depends_on:
       - mongodb
     restart: unless-stopped

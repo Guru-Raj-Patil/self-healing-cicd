@@ -24,12 +24,16 @@ def save_analysis(job_name, build_number, workspace, error_type, confidence, key
     res = collection.insert_one(record)
     return res.inserted_id
 
-def update_status(record_id, status, fix_output=""):
+def update_status(record_id, status, fix_output="", fix_steps=None):
     from bson.objectid import ObjectId
     collection = db['analysis']
+    update_fields = {"status": status, "fix_output": fix_output}
+    if fix_steps is not None:
+        update_fields["fix_steps"] = fix_steps
+        
     collection.update_one(
         {"_id": ObjectId(record_id)},
-        {"$set": {"status": status, "fix_output": fix_output}}
+        {"$set": update_fields}
     )
 
 def get_history():
