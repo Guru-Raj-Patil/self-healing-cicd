@@ -1,0 +1,73 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                // This ensures submodules (like sample-project) are actually downloaded
+                checkout([$class: 'GitSCM', 
+                    branches: scm.branches, 
+                    extensions: scm.extensions + [[$class: 'SubmoduleOption', 
+                                  disableSubmodules: false, 
+                                  parentCredentials: true, 
+                                  recursiveSubmodules: true, 
+                                  trackingSubmodules: false]], 
+                    userRemoteConfigs: scm.userRemoteConfigs
+                ])
+            }
+        }
+        
+        stage('Build & Install') {
+            steps {
+                sh '''
+                python3 -m venv venv
+                . venv/bin/activate
+                pip install -r requirements.txt
+                '''
+            }
+        }
+        
+        stage('Test') {
+            steps {
+                sh '''
+                . venv/bin/activate
+                pytest test_app.py
+                '''
+            }
+        }
+        
+        stage('Deploy') {
+            steps {
+                echo "Deploying application..."
+            }
+        }
+    }
+    
+    post {
+        failure {
+            script {
+                def jobName = env.JOB_NAME
+                def buildNumber = env.BUILD_NUMBER
+                
+                // Get the raw build log.
+                def rawLog = currentBuild.rawBuild.getLog(1000).join('\n')
+                
+                // Get the workspace path
+                def wsPath = pwd()
+
+                def payload = """{
+                    "job_name": "${jobName}",
+                    "build_number": "${buildNumber}",
+                    "workspace": "${wsPath}",
+                    "logs": """ + groovy.json.JsonOutput.toJson(rawLog) + """
+                }"""
+                
+                writeFile file: 'payload.json', text: payload
+                
+                echo "Sending logs to self-healing backend..."
+                // Note: Ensure the "backend" hostname is resolvable within your Jenkins network
+                sh 'curl -s -X POST -H "Content-Type: application/json" -d @payload.json http://backend:8000/analyze || echo "Failed to reach backend"'
+            }
+        }
+    }
+}
