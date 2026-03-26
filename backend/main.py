@@ -1,5 +1,5 @@
 from fastapi import FastAPI, BackgroundTasks, Request
-from pydantic import BaseMode
+from pydantic import BaseModel
 from database import init_db, save_analysis, get_history, update_status
 from fastapi.responses import HTMLResponse
 import sys
@@ -111,4 +111,4 @@ async def history():
 @app.get("/", response_class=HTMLResponse)
 async def dashboard():
     with open(os.path.join(os.path.dirname(__file__), '../dashboard/index.html'), 'r') as f:
-        return f.read()
+        return f.read(
