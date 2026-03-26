@@ -1,0 +1,45 @@
+
+services:
+  jenkins:
+    build:
+      context: ./ci-cd
+      dockerfile: Dockerfile
+    user: root
+    ports:
+      - "8080:8080"
+      - "50000:50000"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
+    # Optional: uncomment to skip wizard if plugins are installed via Dockerfile
+    # environment:
+    #   - JAVA_OPTS=-Djenkins.install.runSetupWizard=false
+
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - ../self-healing-cicd:/workspace
+      - jenkins_home:/var/jenkins_home  # Allow backend to access Jenkins workspaces to apply fixes
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017/cicd_healing
+    depends_on:
+      - mongodb
+    restart: unless-stopped
+
+volumes:
+  jenkins_home:
+  mongo_data:

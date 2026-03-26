@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CI/CD Healing Dashboard</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f6f9; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 { color: #2c3e50; text-align: center; margin-bottom: 30px; }
+        .card { background: white; border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-left: 5px solid #bdc3c7; }
+        .card.success { border-left-color: #2ecc71; }
+        .card.error { border-left-color: #e74c3c; }
+        .card.warning { border-left-color: #f1c40f; }
+        .header { display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 10px; }
+        .success-text { color: #27ae60; font-weight: bold; }
+        .error-text { color: #c0392b; font-weight: bold; }
+        .warning-text { color: #f39c12; font-weight: bold; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.85em; }
+        .badge-high { background: #d4edda; color: #155724; }
+        .badge-med { background: #fff3cd; color: #856404; }
+        .badge-low { background: #f8d7da; color: #721c24; }
+        .section { margin-top: 15px; }
+        .section strong { display: block; margin-bottom: 5px; color: #555; }
+        .code-block { background: #f8f9fa; padding: 10px; border-radius: 4px; font-family: monospace; font-size: 0.9em; overflow-x: auto; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>AI-Based CI/CD Self-Healing Dashboard</h1>
+        <div id="history">Loading...</div>
+    </div>
+
+    <script>
+        async function fetchHistory() {
+            try {
+                const res = await fetch('/history');
+                const data = await res.json();
+                const container = document.getElementById('history');
+                container.innerHTML = '';
+                
+                if (data.length === 0) {
+                    container.innerHTML = '<p style="text-align:center; color:#7f8c8d;">No analysis history yet. Run a failing pipeline in Jenkins!</p>';
+                    return;
+                }
+
+                data.forEach(item => {
+                    const conf = parseFloat(item.confidence);
+                    let badgeClass = 'badge-low';
+                    if (conf > 0.8) badgeClass = 'badge-high';
+                    else if (conf > 0.5) badgeClass = 'badge-med';
+
+                    const statusColor = item.status === 'fix_applied_successfully' ? 'success' : 
+                                      (item.status === 'fix_failed' ? 'error' : 'warning');
+                    
+                    const textColor = item.status === 'fix_applied_successfully' ? 'success-text' : 
+                                      (item.status === 'fix_failed' ? 'error-text' : 'warning-text');
+
+                    const html = `
+                        <div class="card ${statusColor}">
+                            <div class="header">
+                                <div style="font-size: 1.1em;"><strong>Job:</strong> ${item.job_name} <span style="color:#7f8c8d;">(#${item.build_number})</span></div>
+                                <div class="${textColor}">Status: ${item.status.replace(/_/g, ' ').toUpperCase()}</div>
+                            </div>
+                            <div class="section">
+                                <strong>Error Type:</strong> 
+                                <span class="error-text" style="font-size: 1.1em;">${item.error_type}</span>
+                                <span class="badge ${badgeClass}" style="margin-left: 10px;">AI Confidence: ${(conf*100).toFixed(0)}%</span>
+                            </div>
+                            <div class="section">
+                                <strong>AI Explanation:</strong>
+                                <div style="color: #34495e;">${item.explanation}</div>
+                            </div>
+                            <div class="section">
+                                <strong>Keywords Matched:</strong>
+                                <div><span class="badge" style="background: #e2e3e5; color: #383d41;">${item.keywords.join(', ')}</span></div>
+                            </div>
+                            <div class="section">
+                                <strong>Recommended Fix:</strong>
+                                <div class="code-block">${item.recommended_fix}</div>
+                            </div>
+                            ${item.fix_output ? `
+                            <div class="section">
+                                <strong>Auto-Fix Output:</strong>
+                                <div class="code-block">${item.fix_output}</div>
+                            </div>` : ''}
+                        </div>
+                    `;
+                    container.innerHTML += html;
+                });
+            } catch (e) {
+                document.getElementById('history').innerHTML = '<p class="error-text" style="text-align:center;">Failed to load history.</p>';
+            }
+        }
+
+        fetchHistory();
+        setInterval(fetchHistory, 5000); // refresh every 5s
+    </script>
+</body>
+</html>
