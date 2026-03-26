@@ -32,6 +32,9 @@ services:
       - "8000:8000"
     volumes:
       - ./backend:/app
+      - ./ai-engine:/ai-engine
+      - ./dashboard:/dashboard
+      - ./fix-scripts:/fix-scripts
       - ../self-healing-cicd:/workspace
       - jenkins_home:/var/jenkins_home  # Allow backend to access Jenkins workspaces to apply fixes
     environment:
