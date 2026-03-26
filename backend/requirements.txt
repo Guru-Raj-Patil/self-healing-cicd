@@ -1,6 +1,5 @@
 fastapi
 uvicorn
 pymongo
-pydantic
 jinjan2
 requests
