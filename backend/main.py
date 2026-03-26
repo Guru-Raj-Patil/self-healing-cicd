@@ -1,5 +1,5 @@
 from fastapi import FastAPI, BackgroundTasks, Request
-from pydantic import BaseModel
+from pydantic import BaseMode
 from database import init_db, save_analysis, get_history, update_status
 from fastapi.responses import HTMLResponse
 import sys
