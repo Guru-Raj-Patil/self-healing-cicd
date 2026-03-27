@@ -3,7 +3,7 @@ import requests
 def get_status():
     return "OK"
 
-def main():
+def main(:
     print(get_status())
 
 if __name__ == "__main__":
