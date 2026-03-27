@@ -1,6 +1,6 @@
 import requests
 
-def get_status()
+def get_status():
     return "OK"
 
 def main():
